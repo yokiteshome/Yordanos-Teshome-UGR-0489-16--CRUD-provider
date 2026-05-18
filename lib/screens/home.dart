@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
 import '../models/cart.dart';
 import 'cart_details_screen.dart';
-import 'edit_cart_screen.dart';
 
 Color colorWithAlpha(Color color, double opacity) {
   return color.withAlpha((255 * opacity).toInt());
@@ -286,17 +285,51 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showUpdateDialog(BuildContext context, Cart cart) {
-    final cartItems = context
-        .read<CartProvider>()
-        .carts
-        .where((item) => item.cartId == cart.cartId)
-        .toList();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Update Cart'),
+        content: Text('Update cart ${cart.cartId} with dummy items?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final messenger = ScaffoldMessenger.of(context);
+              Navigator.pop(ctx);
+              
+              // Dummy data
+              final dummyProducts = [
+                {
+                  'id': 1,
+                  'title': 'Dummy Product 1',
+                  'price': 10.0,
+                  'quantity': 2,
+                  'total': 20.0,
+                  'discountPercentage': 0.0,
+                  'discountedTotal': 20.0,
+                  'thumbnail': '',
+                },
+              ];
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            EditCartScreen(cartItems: cartItems, cartId: cart.cartId),
+              final provider = context.read<CartProvider>();
+              await provider.updateCart(cart.cartId, dummyProducts);
+              
+              if (provider.error != null) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text('Error: ${provider.error}')),
+                );
+              } else {
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Cart updated with dummy data!')),
+                );
+              }
+            },
+            child: const Text('Update'),
+          ),
+        ],
       ),
     );
   }
